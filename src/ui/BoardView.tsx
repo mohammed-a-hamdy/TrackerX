@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../useStore'
 
 const COLUMNS = ['Backlog', 'In Progress', 'Done'] as const
@@ -8,8 +8,11 @@ export function BoardView() {
   const tasks = useStore(s => s.tasks)
   const moveTo = useStore(s => s.moveTo)
   const addTask = useStore(s => s.addTask)
+  const startTimer = useStore(s => s.startTimer)
+  const pauseTimer = useStore(s => s.pauseTimer)
   const [title, setTitle] = useState('')
   const [list, setList] = useState('')
+  const [tick, setTick] = useState(0)
 
   const grouped = useMemo(() => {
     const map: Record<Column, typeof tasks> = {
@@ -43,6 +46,30 @@ export function BoardView() {
 
   const existingLists = Array.from(new Set(tasks.map(t => t.list ?? 'General')))
 
+  // Update the board every second while any timer is running
+  useEffect(() => {
+    const anyRunning = tasks.some(t => t.timerRunning)
+    if (!anyRunning) return
+    const id = setInterval(() => setTick(t => t + 1), 1000)
+    return () => clearInterval(id)
+  }, [tasks])
+
+  const format = (totalSeconds: number) => {
+    const m = String(Math.floor(totalSeconds / 60)).padStart(2, '0')
+    const s = String(totalSeconds % 60).padStart(2, '0')
+    return `${m}:${s}`
+  }
+
+  const computeTotalSeconds = (t: { timerSeconds?: number; timerRunning?: boolean; timerStartedAt?: string }) => {
+    const base = t.timerSeconds ?? 0
+    if (t.timerRunning && t.timerStartedAt) {
+      const started = Date.parse(t.timerStartedAt)
+      const elapsed = Math.max(0, Math.floor((Date.now() - started) / 1000))
+      return Math.max(0, base + elapsed)
+    }
+    return Math.max(0, base)
+  }
+
   return (
     <section className="board">
       {COLUMNS.map(col => (
@@ -62,8 +89,11 @@ export function BoardView() {
             {grouped[col].map(t => (
               <li key={t.id} className="card" draggable onDragStart={e => onDragStart(e, t.id)}>
                 <div className="title">{t.title}</div>
-                <div className="meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                   <span className="badge">{t.list || 'General'}</span>
+                  <button onClick={() => (t.timerRunning ? pauseTimer(t.id) : startTimer(t.id))}>
+                    {t.timerRunning ? format(computeTotalSeconds(t)) : 'Start'}
+                  </button>
                 </div>
               </li>
             ))}
