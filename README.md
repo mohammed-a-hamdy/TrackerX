@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="src/logo.png" alt="TrackerX logo" width="72" height="72" />
+</p>
+
 ## TrackerX
 
 Lightweight task tracker with lists and a simple 3‑column board. Each task has its own count‑up timer and a reporting view that aggregates time per task and per list. Runs entirely in the browser with localStorage persistence.
