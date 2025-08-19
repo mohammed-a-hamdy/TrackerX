@@ -1,0 +1,133 @@
+import { create } from 'zustand'
+
+export type Task = {
+  id: string
+  title: string
+  notes?: string
+  status?: 'Backlog' | 'In Progress' | 'Done'
+  list?: string
+  createdAt: string
+  completedAt?: string
+  // Accumulated elapsed seconds for the task timer
+  timerSeconds?: number
+  timerRunning?: boolean
+  timerStartedAt?: string
+}
+
+type Store = {
+  tasks: Task[]
+  addTask: (input: { title: string; list?: string }) => void
+  toggleDone: (id: string) => void
+  moveTo: (id: string, status: NonNullable<Task['status']>) => void
+  startTimer: (id: string) => void
+  pauseTimer: (id: string) => void
+  resetTimer: (id: string, seconds?: number) => void
+}
+
+const STORAGE_KEY = 'trackerx:v1'
+
+function load(): Task[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    const parsed = raw ? JSON.parse(raw) as any[] : []
+    // migrate older tasks to have required fields
+    return parsed.map((t: any) => {
+      const s = t?.status as string | undefined
+      const normalizedStatus: NonNullable<Task['status']> = (s === 'Backlog' || s === 'In Progress' || s === 'Done') ? s : 'Backlog'
+      return {
+        id: t?.id ?? crypto.randomUUID(),
+        title: String(t?.title ?? ''),
+        notes: t?.notes,
+        status: normalizedStatus,
+        list: t?.list ?? 'General',
+        createdAt: t?.createdAt ?? new Date().toISOString(),
+        completedAt: t?.completedAt,
+        // For older versions that used countdown, default to 0 accumulated seconds
+        timerSeconds: typeof t?.timerSeconds === 'number' ? Math.max(0, t.timerSeconds) : 0,
+        timerRunning: t?.timerRunning ?? false,
+        timerStartedAt: t?.timerStartedAt,
+      } as Task
+    })
+  } catch {
+    return []
+  }
+}
+
+function save(tasks: Task[]) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)) } catch {}
+}
+
+export const useStore = create<Store>((set, get) => ({
+  tasks: load(),
+  addTask: ({ title, list }) => set(state => {
+    const task: Task = {
+      id: crypto.randomUUID(),
+      title,
+      createdAt: new Date().toISOString(),
+      status: 'Backlog',
+      list: (list && list.trim()) ? list.trim() : 'General',
+      timerSeconds: 0,
+      timerRunning: false,
+      timerStartedAt: undefined
+    }
+    const tasks = [task, ...state.tasks]
+    save(tasks)
+    return { tasks }
+  }),
+  toggleDone: (id) => set(state => {
+    const now = Date.now()
+    const tasks = state.tasks.map(t => {
+      if (t.id !== id) return t
+      let added = 0
+      if (t.timerRunning && t.timerStartedAt) {
+        const started = Date.parse(t.timerStartedAt)
+        added = Math.max(0, Math.floor((now - started) / 1000))
+      }
+      const newCompletedAt = t.completedAt ? undefined : new Date().toISOString()
+      const newStatus = t.completedAt ? t.status : 'Done'
+      return {
+        ...t,
+        completedAt: newCompletedAt,
+        status: newStatus,
+        timerSeconds: Math.max(0, (t.timerSeconds ?? 0) + added),
+        timerRunning: false,
+        timerStartedAt: undefined
+      }
+    })
+    save(tasks)
+    return { tasks }
+  }),
+  moveTo: (id, status) => set(state => {
+    const tasks = state.tasks.map(t => t.id === id ? { ...t, status } : t)
+    save(tasks)
+    return { tasks }
+  }),
+  startTimer: (id) => set(state => {
+    const nowIso = new Date().toISOString()
+    const tasks = state.tasks.map(t => t.id === id && !t.timerRunning
+      ? { ...t, timerRunning: true, timerStartedAt: nowIso }
+      : t)
+    save(tasks)
+    return { tasks }
+  }),
+  pauseTimer: (id) => set(state => {
+    const now = Date.now()
+    const tasks = state.tasks.map(t => {
+      if (t.id !== id) return t
+      if (!t.timerRunning || !t.timerStartedAt) return { ...t, timerRunning: false, timerStartedAt: undefined }
+      const started = Date.parse(t.timerStartedAt)
+      const elapsed = Math.max(0, Math.floor((now - started) / 1000))
+      const total = Math.max(0, (t.timerSeconds ?? 0) + elapsed)
+      return { ...t, timerSeconds: total, timerRunning: false, timerStartedAt: undefined }
+    })
+    save(tasks)
+    return { tasks }
+  }),
+  resetTimer: (id, seconds = 0) => set(state => {
+    const tasks = state.tasks.map(t => t.id === id ? { ...t, timerSeconds: seconds, timerRunning: false, timerStartedAt: undefined } : t)
+    save(tasks)
+    return { tasks }
+  })
+}))
+
+
