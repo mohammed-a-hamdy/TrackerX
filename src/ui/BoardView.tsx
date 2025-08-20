@@ -8,6 +8,7 @@ export function BoardView() {
   const tasks = useStore(s => s.tasks)
   const moveTo = useStore(s => s.moveTo)
   const addTask = useStore(s => s.addTask)
+  const deleteTask = useStore(s => s.deleteTask)
   const startTimer = useStore(s => s.startTimer)
   const pauseTimer = useStore(s => s.pauseTimer)
   const [title, setTitle] = useState('')
@@ -88,12 +89,15 @@ export function BoardView() {
           <ul>
             {grouped[col].map(t => (
               <li key={t.id} className="card" draggable onDragStart={e => onDragStart(e, t.id)}>
-                <div className="title">{t.title}</div>
+                <div className={`title ${t.completedAt ? 'done' : ''}`}>{t.title}</div>
                 <div className="meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                   <span className="badge">{t.list || 'General'}</span>
                   <button onClick={() => (t.timerRunning ? pauseTimer(t.id) : startTimer(t.id))}>
                     {t.timerRunning ? format(computeTotalSeconds(t)) : 'Start'}
                   </button>
+                </div>
+                <div className="actions" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+                  <button title="Delete" onClick={() => deleteTask(t.id)}>Delete</button>
                 </div>
               </li>
             ))}

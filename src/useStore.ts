@@ -19,6 +19,7 @@ type Store = {
   addTask: (input: { title: string; list?: string }) => void
   toggleDone: (id: string) => void
   moveTo: (id: string, status: NonNullable<Task['status']>) => void
+  deleteTask: (id: string) => void
   startTimer: (id: string) => void
   pauseTimer: (id: string) => void
   resetTimer: (id: string, seconds?: number) => void
@@ -98,7 +99,32 @@ export const useStore = create<Store>((set, get) => ({
     return { tasks }
   }),
   moveTo: (id, status) => set(state => {
-    const tasks = state.tasks.map(t => t.id === id ? { ...t, status } : t)
+    const now = Date.now()
+    const tasks = state.tasks.map(t => {
+      if (t.id !== id) return t
+      if (status === 'Done') {
+        let added = 0
+        if (t.timerRunning && t.timerStartedAt) {
+          const started = Date.parse(t.timerStartedAt)
+          added = Math.max(0, Math.floor((now - started) / 1000))
+        }
+        return {
+          ...t,
+          status,
+          completedAt: t.completedAt ?? new Date().toISOString(),
+          timerSeconds: Math.max(0, (t.timerSeconds ?? 0) + added),
+          timerRunning: false,
+          timerStartedAt: undefined
+        }
+      } else {
+        return { ...t, status, completedAt: undefined }
+      }
+    })
+    save(tasks)
+    return { tasks }
+  }),
+  deleteTask: (id) => set(state => {
+    const tasks = state.tasks.filter(t => t.id !== id)
     save(tasks)
     return { tasks }
   }),

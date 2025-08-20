@@ -6,6 +6,7 @@ import { Checkbox } from './Checkbox'
 export function ListView() {
   const addTask = useStore(s => s.addTask)
   const toggleDone = useStore(s => s.toggleDone)
+  const deleteTask = useStore(s => s.deleteTask)
   const tasks = useStore(s => s.tasks)
   const [input, setInput] = useState('')
   const [list, setList] = useState('')
@@ -58,7 +59,10 @@ export function ListView() {
                     <span className={t.completedAt ? 'done' : ''}>{t.title}</span>
                     <span className="badge">{t.status ?? 'Backlog'}</span>
                   </div>
-                  <TaskTimer taskId={t.id} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <TaskTimer taskId={t.id} />
+                    <button title="Delete" onClick={() => deleteTask(t.id)}>Delete</button>
+                  </div>
                 </div>
               </li>
             ))}
