@@ -21,11 +21,13 @@ export function Reports() {
     return () => clearInterval(id)
   }, [])
   const taskTimes = useMemo(() => {
-    return tasks.map(t => {
+    const arr = tasks.map(t => {
       const base = (t.timerSeconds ?? 0) * 1000
       const extra = (t.timerRunning && t.timerStartedAt) ? Math.max(0, now - Date.parse(t.timerStartedAt)) : 0
       return { id: t.id, title: t.title, list: t.list || 'General', ms: base + extra }
     })
+    arr.sort((a, b) => b.ms - a.ms)
+    return arr
   }, [tasks, now])
 
   const totalPerList = useMemo(() => {

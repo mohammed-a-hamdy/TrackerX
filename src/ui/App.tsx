@@ -56,8 +56,18 @@ export function App() {
           <button className={view==='list'? 'active':''} onClick={() => setView('list')}>List</button>
           <button className={view==='board'? 'active':''} onClick={() => setView('board')}>Board</button>
           <button className={view==='reports'? 'active':''} onClick={() => setView('reports')}>Report</button>
-          <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} title="Toggle theme">
-            {theme === 'dark' ? 'Light' : 'Dark'}
+          <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} title="Toggle theme" aria-label="Toggle theme">
+            {theme === 'dark' ? (
+              // Show full moon icon when in dark theme
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+              </svg>
+            ) : (
+              // Show crescent moon icon when in light theme
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            )}
           </button>
         </nav>
       </header>

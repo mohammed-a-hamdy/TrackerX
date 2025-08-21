@@ -9,6 +9,8 @@ export function BoardView() {
   const moveTo = useStore(s => s.moveTo)
   const addTask = useStore(s => s.addTask)
   const deleteTask = useStore(s => s.deleteTask)
+  const updateTitle = useStore(s => s.updateTitle)
+  const updateList = useStore(s => s.updateList)
   const startTimer = useStore(s => s.startTimer)
   const pauseTimer = useStore(s => s.pauseTimer)
   const [title, setTitle] = useState('')
@@ -90,12 +92,30 @@ export function BoardView() {
             {grouped[col].map(t => (
               <li key={t.id} className="card" draggable onDragStart={e => onDragStart(e, t.id)}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <button title="Delete" onClick={() => { if (confirm('Delete this task?')) deleteTask(t.id) }}>Delete</button>
-                    <div className={`title ${t.completedAt ? 'done' : ''}`}>{t.title}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+                    <button title="Delete" aria-label="Delete" onClick={() => { if (confirm('Delete this task?')) deleteTask(t.id) }}>
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                    <input
+                      value={t.title}
+                      onChange={e => updateTitle(t.id, e.target.value)}
+                      onBlur={e => updateTitle(t.id, e.target.value)}
+                      className={`title ${t.completedAt ? 'done' : ''}`}
+                      style={{ background: 'transparent', border: 'none', padding: 0, color: 'inherit', minWidth: 0, width: '100%' }}
+                    />
                   </div>
                   <div className="meta" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span className="badge">{t.list || 'General'}</span>
+                    <button
+                      className="badge"
+                      title="Edit list"
+                      onClick={() => {
+                        const next = prompt('Set list name', t.list || 'General')
+                        if (next != null) updateList(t.id, next)
+                      }}
+                    >{t.list || 'General'}</button>
                     <button onClick={() => (t.timerRunning ? pauseTimer(t.id) : startTimer(t.id))}>
                       {t.timerRunning ? format(computeTotalSeconds(t)) : 'Start'}
                     </button>

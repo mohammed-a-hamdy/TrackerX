@@ -7,6 +7,8 @@ export function ListView() {
   const addTask = useStore(s => s.addTask)
   const toggleDone = useStore(s => s.toggleDone)
   const deleteTask = useStore(s => s.deleteTask)
+  const updateTitle = useStore(s => s.updateTitle)
+  const updateList = useStore(s => s.updateList)
   const tasks = useStore(s => s.tasks)
   const [input, setInput] = useState('')
   const [list, setList] = useState('')
@@ -53,13 +55,32 @@ export function ListView() {
               <li key={t.id}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'auto 24px 1fr auto', alignItems: 'center', gap: 8 }}>
                   <div>
-                    <button title="Delete" onClick={() => { if (confirm('Delete this task?')) deleteTask(t.id) }}>Delete</button>
+                    <button title="Delete" aria-label="Delete" onClick={() => { if (confirm('Delete this task?')) deleteTask(t.id) }}>
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
                   </div>
                   <div>
                     <Checkbox checked={!!t.completedAt} onChange={() => toggleDone(t.id)} label={t.title} />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span className={t.completedAt ? 'done' : ''}>{t.title}</span>
+                    <input
+                      value={t.title}
+                      onChange={e => updateTitle(t.id, e.target.value)}
+                      onBlur={e => updateTitle(t.id, e.target.value)}
+                      className={t.completedAt ? 'done' : ''}
+                      style={{ background: 'transparent', border: 'none', padding: 0, color: 'inherit', minWidth: 0 }}
+                    />
+                    <button
+                      className="badge"
+                      title="Edit list"
+                      onClick={() => {
+                        const next = prompt('Set list name', t.list || 'General')
+                        if (next != null) updateList(t.id, next)
+                      }}
+                    >{t.list || 'General'}</button>
                     <span className="badge">{t.status ?? 'Backlog'}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
