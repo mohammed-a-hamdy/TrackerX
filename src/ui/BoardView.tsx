@@ -20,8 +20,6 @@ export function BoardView() {
   const [tick, setTick] = useState(0)
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<Column | null>(null)
-  const [currentColumnIndex, setCurrentColumnIndex] = useState(0)
-  const [touchStartX, setTouchStartX] = useState<number | null>(null)
 
   const grouped = useMemo(() => {
     const map: Record<Column, typeof tasks> = {
@@ -53,61 +51,7 @@ export function BoardView() {
     e.preventDefault()
   }
 
-  // Touch-based drag and drop for mobile
-  const onTouchStart = (e: React.TouchEvent<HTMLLIElement>, taskId: string) => {
-    setDraggedTaskId(taskId)
-  }
-  
-  const onTouchMove = (e: React.TouchEvent<HTMLElement>) => {
-    if (!draggedTaskId) return
-    
-    e.preventDefault()
-    const touch = e.touches[0]
-    const element = document.elementFromPoint(touch.clientX, touch.clientY)
-    const columnElement = element?.closest('.col')
-    
-    if (columnElement) {
-      const columnTitle = columnElement.querySelector('h3')?.textContent
-      if (columnTitle && COLUMNS.includes(columnTitle as Column)) {
-        setDragOverColumn(columnTitle as Column)
-      }
-    } else {
-      setDragOverColumn(null)
-    }
-  }
-  
-  const onTouchEnd = (e: React.TouchEvent<HTMLElement>) => {
-    if (draggedTaskId && dragOverColumn) {
-      moveTo(draggedTaskId, dragOverColumn)
-    }
-    setDraggedTaskId(null)
-    setDragOverColumn(null)
-  }
 
-  // Swipe navigation for mobile
-  const onBoardTouchStart = (e: React.TouchEvent<HTMLElement>) => {
-    setTouchStartX(e.touches[0].clientX)
-  }
-  
-  const onBoardTouchEnd = (e: React.TouchEvent<HTMLElement>) => {
-    if (touchStartX === null) return
-    
-    const touchEndX = e.changedTouches[0].clientX
-    const diff = touchStartX - touchEndX
-    const threshold = 50 // minimum swipe distance
-    
-    if (Math.abs(diff) > threshold) {
-      if (diff > 0 && currentColumnIndex < COLUMNS.length - 1) {
-        // Swipe left - go to next column
-        setCurrentColumnIndex(prev => prev + 1)
-      } else if (diff < 0 && currentColumnIndex > 0) {
-        // Swipe right - go to previous column
-        setCurrentColumnIndex(prev => prev - 1)
-      }
-    }
-    
-    setTouchStartX(null)
-  }
 
   const existingLists = Array.from(new Set(tasks.map(t => t.list ?? 'General')))
 
@@ -136,27 +80,14 @@ export function BoardView() {
   }
 
   return (
-    <section className="board" onTouchMove={onTouchMove} onTouchStart={onBoardTouchStart} onTouchEnd={onBoardTouchEnd}>
-      <div className="column-indicators">
-        {COLUMNS.map((col, index) => (
-          <div 
-            key={col} 
-            className={`indicator ${index === currentColumnIndex ? 'active' : ''}`}
-            onClick={() => setCurrentColumnIndex(index)}
-          />
-        ))}
-      </div>
+    <section className="board">
       <div className="board-container">
         {COLUMNS.map((col, index) => (
           <div 
             key={col} 
-            className={`col ${dragOverColumn === col ? 'drag-over' : ''} ${index === currentColumnIndex ? 'active' : ''}`} 
+            className={`col ${dragOverColumn === col ? 'drag-over' : ''}`} 
             onDragOver={onDragOver} 
             onDrop={e => onDrop(e, col)}
-            style={{ 
-              transform: `translateX(${(index - currentColumnIndex) * 100}%)`,
-              transition: 'transform 0.3s ease-in-out'
-            }}
           >
           <h3>{col}</h3>
           {col === 'Backlog' && (
