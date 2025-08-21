@@ -90,7 +90,7 @@ export function BoardView() {
           )}
           <ul>
             {grouped[col].map(t => (
-              <li key={t.id} className="card" draggable onDragStart={e => onDragStart(e, t.id)}>
+              <li key={t.id} className={`card status-${col.replace(' ', '').toLowerCase()}`} draggable onDragStart={e => onDragStart(e, t.id)}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
                     <button title="Delete" aria-label="Delete" onClick={() => { if (confirm('Delete this task?')) deleteTask(t.id) }}>
