@@ -107,7 +107,6 @@ export function BoardView() {
                 className={`card status-${col.replace(' ', '').toLowerCase()} ${draggedTaskId === t.id ? 'dragging' : ''}`} 
                 draggable 
                 onDragStart={e => onDragStart(e, t.id)}
-                onTouchStart={e => onTouchStart(e, t.id)}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
