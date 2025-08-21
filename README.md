@@ -8,10 +8,11 @@ Lightweight task tracker with lists and a simple 3‑column board. Each task has
 
 ### Features
 - **List view with labels**: Add tasks with an optional list label (e.g., Project, Personal). Tasks are grouped by list.
-- **Board view (3 columns)**: Backlog, In Progress, Done. Drag and drop cards between columns.
+- **Board view (3 columns)**: Backlog, In Progress, Done. Drag and drop cards between columns using mouse interactions.
 - **Per‑task timer (count‑up)**: Start/pause/reset a timer on any task. Time accumulates without limits and persists across reloads.
 - **Report tab**: See total time spent per task and aggregated per list, live‑updating while timers run.
 - **Offline storage**: All data is stored locally in your browser via `localStorage`.
+- **Desktop-optimized**: Designed for desktop use with traditional mouse and keyboard interactions.
 
 ### Quick start
 1. Install Node.js 18+.
@@ -29,7 +30,7 @@ Lightweight task tracker with lists and a simple 3‑column board. Each task has
 ### Usage
 - **Add a task**: In List or Board (Backlog column) enter a title. Optionally add a list label to categorize the task.
 - **Move tasks**:
-  - In Board, drag a card between Backlog, In Progress, and Done.
+  - In Board, drag a card between Backlog, In Progress, and Done using mouse drag and drop.
   - In List, toggle completion via the checkbox to mark Done/Undone.
 - **Timers**:
   - Each task shows a mm:ss timer. Click Start/Pause to control it; Reset sets it back to 0.
