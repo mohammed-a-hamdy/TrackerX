@@ -6,6 +6,8 @@ export type Task = {
   notes?: string
   status?: 'Backlog' | 'In Progress' | 'Done'
   list?: string
+  important?: boolean
+  urgent?: boolean
   createdAt: string
   completedAt?: string
   // Accumulated elapsed seconds for the task timer
@@ -22,6 +24,8 @@ type Store = {
   deleteTask: (id: string) => void
   updateTitle: (id: string, title: string) => void
   updateList: (id: string, list: string) => void
+  toggleImportant: (id: string) => void
+  toggleUrgent: (id: string) => void
   startTimer: (id: string) => void
   pauseTimer: (id: string) => void
   resetTimer: (id: string, seconds?: number) => void
@@ -37,19 +41,21 @@ function load(): Task[] {
     return parsed.map((t: any) => {
       const s = t?.status as string | undefined
       const normalizedStatus: NonNullable<Task['status']> = (s === 'Backlog' || s === 'In Progress' || s === 'Done') ? s : 'Backlog'
-      return {
-        id: t?.id ?? crypto.randomUUID(),
-        title: String(t?.title ?? ''),
-        notes: t?.notes,
-        status: normalizedStatus,
-        list: t?.list ?? 'General',
-        createdAt: t?.createdAt ?? new Date().toISOString(),
-        completedAt: t?.completedAt,
-        // For older versions that used countdown, default to 0 accumulated seconds
-        timerSeconds: typeof t?.timerSeconds === 'number' ? Math.max(0, t.timerSeconds) : 0,
-        timerRunning: t?.timerRunning ?? false,
-        timerStartedAt: t?.timerStartedAt,
-      } as Task
+              return {
+          id: t?.id ?? crypto.randomUUID(),
+          title: String(t?.title ?? ''),
+          notes: t?.notes,
+          status: normalizedStatus,
+          list: t?.list ?? 'General',
+          important: t?.important ?? false,
+          urgent: t?.urgent ?? false,
+          createdAt: t?.createdAt ?? new Date().toISOString(),
+          completedAt: t?.completedAt,
+          // For older versions that used countdown, default to 0 accumulated seconds
+          timerSeconds: typeof t?.timerSeconds === 'number' ? Math.max(0, t.timerSeconds) : 0,
+          timerRunning: t?.timerRunning ?? false,
+          timerStartedAt: t?.timerStartedAt,
+        } as Task
     })
   } catch {
     return []
@@ -69,6 +75,8 @@ export const useStore = create<Store>((set, get) => ({
       createdAt: new Date().toISOString(),
       status: 'Backlog',
       list: (list && list.trim()) ? list.trim() : 'General',
+      important: false,
+      urgent: false,
       timerSeconds: 0,
       timerRunning: false,
       timerStartedAt: undefined
@@ -140,6 +148,16 @@ export const useStore = create<Store>((set, get) => ({
   updateList: (id, list) => set(state => {
     const trimmed = list.trim() || 'General'
     const tasks = state.tasks.map(t => t.id === id ? { ...t, list: trimmed } : t)
+    save(tasks)
+    return { tasks }
+  }),
+  toggleImportant: (id) => set(state => {
+    const tasks = state.tasks.map(t => t.id === id ? { ...t, important: !t.important } : t)
+    save(tasks)
+    return { tasks }
+  }),
+  toggleUrgent: (id) => set(state => {
+    const tasks = state.tasks.map(t => t.id === id ? { ...t, urgent: !t.urgent } : t)
     save(tasks)
     return { tasks }
   }),

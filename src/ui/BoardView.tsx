@@ -11,6 +11,8 @@ export function BoardView() {
   const deleteTask = useStore(s => s.deleteTask)
   const updateTitle = useStore(s => s.updateTitle)
   const updateList = useStore(s => s.updateList)
+  const toggleImportant = useStore(s => s.toggleImportant)
+  const toggleUrgent = useStore(s => s.toggleUrgent)
   const startTimer = useStore(s => s.startTimer)
   const pauseTimer = useStore(s => s.pauseTimer)
   const [title, setTitle] = useState('')
@@ -99,6 +101,36 @@ export function BoardView() {
                         <line x1="6" y1="6" x2="18" y2="18" />
                       </svg>
                     </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <button 
+                        title={t.important ? "Remove important" : "Mark important"}
+                        onClick={() => toggleImportant(t.id)}
+                        style={{ 
+                          background: 'transparent', 
+                          border: 'none', 
+                          padding: 0, 
+                          color: t.important ? '#ef4444' : 'var(--muted)',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        {t.important ? '!' : '○'}
+                      </button>
+                      <button 
+                        title={t.urgent ? "Remove urgent" : "Mark urgent"}
+                        onClick={() => toggleUrgent(t.id)}
+                        style={{ 
+                          background: 'transparent', 
+                          border: 'none', 
+                          padding: 0, 
+                          color: t.urgent ? '#f97316' : 'var(--muted)',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        {t.urgent ? '!!' : '○○'}
+                      </button>
+                    </div>
                     <input
                       value={t.title}
                       onChange={e => updateTitle(t.id, e.target.value)}
