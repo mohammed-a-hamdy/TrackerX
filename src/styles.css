@@ -49,15 +49,54 @@ input { flex:1; background:var(--panel); color:var(--text); border:1px solid var
 .list .done { text-decoration: line-through; color: var(--muted); }
 
 .board { display:grid; gap:12px; grid-template-columns: repeat(3, minmax(220px, 1fr)); }
+.board-container { position: relative; width: 100%; overflow: hidden; }
+
+@media (max-width: 768px) {
+  .board { 
+    display: block; 
+    gap: 0; 
+    grid-template-columns: none; 
+  }
+  .board-container { 
+    display: flex; 
+    width: 300%; 
+  }
+  .board .col { 
+    width: 33.333%; 
+    min-width: 100vw; 
+    margin: 0; 
+    border-radius: 0; 
+    min-height: calc(100vh - 120px); 
+  }
+  .column-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 0;
+  }
+  .indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .indicator.active {
+    background: var(--accent);
+  }
+}
 .board .col { background: var(--panel); border:1px solid var(--border); padding:8px; border-radius: 10px; min-height: 120px; }
 .board .col:nth-child(2) { box-shadow: inset 0 0 0 1px rgba(46, 204, 113, 0.24); background-image: linear-gradient(to bottom, rgba(46, 204, 113, 0.12), transparent); }
 .board .col:nth-child(3) { box-shadow: inset 0 0 0 1px rgba(79, 140, 255, 0.26); background-image: linear-gradient(to bottom, rgba(79, 140, 255, 0.14), transparent); }
+.board .col.drag-over { box-shadow: inset 0 0 0 2px var(--accent); background-image: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent); }
 .board h3 { margin: 6px 6px 10px; font-size: 14px; color: var(--muted); }
 .board ul { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; }
 .card { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:8px; }
 .card.status-backlog { box-shadow: inset 0 0 0 1px rgba(150,150,150,0.2); background-image: linear-gradient(to bottom, rgba(150,150,150,0.10), transparent); }
 .card.status-inprogress { box-shadow: inset 0 0 0 1px rgba(46, 204, 113, 0.30); background-image: linear-gradient(to bottom, rgba(46, 204, 113, 0.16), transparent); }
 .card.status-done { box-shadow: inset 0 0 0 1px rgba(79, 140, 255, 0.32); background-image: linear-gradient(to bottom, rgba(79, 140, 255, 0.18), transparent); }
+.card.dragging { opacity: 0.5; transform: scale(0.95); }
 .card .title { margin-bottom:8px; }
 .card .title.done { text-decoration: line-through; color: var(--muted); }
 .card .actions { display:flex; flex-wrap:wrap; gap:6px; }
