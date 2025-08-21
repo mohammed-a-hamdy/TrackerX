@@ -7,6 +7,10 @@ import logo from '../logo.png'
 export function App() {
   const [view, setView] = useState<'list' | 'board' | 'reports'>('list')
   const [quote, setQuote] = useState<string>('')
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const stored = localStorage.getItem('trackerx:theme')
+    return stored === 'light' ? 'light' : 'dark'
+  })
 
   useEffect(() => {
     async function loadQuote() {
@@ -35,6 +39,11 @@ export function App() {
     }
     loadQuote()
   }, [])
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    try { localStorage.setItem('trackerx:theme', theme) } catch {}
+  }, [theme])
+
   return (
     <div className="app">
       <header className="topbar">
@@ -47,6 +56,9 @@ export function App() {
           <button className={view==='list'? 'active':''} onClick={() => setView('list')}>List</button>
           <button className={view==='board'? 'active':''} onClick={() => setView('board')}>Board</button>
           <button className={view==='reports'? 'active':''} onClick={() => setView('reports')}>Report</button>
+          <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} title="Toggle theme">
+            {theme === 'dark' ? 'Light' : 'Dark'}
+          </button>
         </nav>
       </header>
       <main>

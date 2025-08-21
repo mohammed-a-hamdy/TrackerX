@@ -51,7 +51,10 @@ export function ListView() {
           <ul>
             {grouped[listName].map(t => (
               <li key={t.id}>
-                <div style={{ display: 'grid', gridTemplateColumns: '24px 1fr auto', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'auto 24px 1fr auto', alignItems: 'center', gap: 8 }}>
+                  <div>
+                    <button title="Delete" onClick={() => { if (confirm('Delete this task?')) deleteTask(t.id) }}>Delete</button>
+                  </div>
                   <div>
                     <Checkbox checked={!!t.completedAt} onChange={() => toggleDone(t.id)} label={t.title} />
                   </div>
@@ -61,7 +64,6 @@ export function ListView() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <TaskTimer taskId={t.id} />
-                    <button title="Delete" onClick={() => deleteTask(t.id)}>Delete</button>
                   </div>
                 </div>
               </li>

@@ -1,4 +1,4 @@
-:root {
+[data-theme="dark"] {
   --bg: #0a0a0a;
   --panel: #121212;
   --text: #e6e6e6;
@@ -6,6 +6,15 @@
   --accent: #8a8a8a;
   --accent-2: #6f6f6f;
   --border: #1e1e1e;
+}
+[data-theme="light"] {
+  --bg: #f8f8f8;
+  --panel: #ffffff;
+  --text: #111111;
+  --muted: #505050;
+  --accent: #2b6cb0;
+  --accent-2: #3182ce;
+  --border: #e5e7eb;
 }
 * { box-sizing: border-box; }
 body { margin: 0; font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, Apple Color Emoji, Segoe UI Emoji; background: var(--bg); color: var(--text); }

@@ -89,15 +89,17 @@ export function BoardView() {
           <ul>
             {grouped[col].map(t => (
               <li key={t.id} className="card" draggable onDragStart={e => onDragStart(e, t.id)}>
-                <div className={`title ${t.completedAt ? 'done' : ''}`}>{t.title}</div>
-                <div className="meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                  <span className="badge">{t.list || 'General'}</span>
-                  <button onClick={() => (t.timerRunning ? pauseTimer(t.id) : startTimer(t.id))}>
-                    {t.timerRunning ? format(computeTotalSeconds(t)) : 'Start'}
-                  </button>
-                </div>
-                <div className="actions" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-                  <button title="Delete" onClick={() => deleteTask(t.id)}>Delete</button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button title="Delete" onClick={() => { if (confirm('Delete this task?')) deleteTask(t.id) }}>Delete</button>
+                    <div className={`title ${t.completedAt ? 'done' : ''}`}>{t.title}</div>
+                  </div>
+                  <div className="meta" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span className="badge">{t.list || 'General'}</span>
+                    <button onClick={() => (t.timerRunning ? pauseTimer(t.id) : startTimer(t.id))}>
+                      {t.timerRunning ? format(computeTotalSeconds(t)) : 'Start'}
+                    </button>
+                  </div>
                 </div>
               </li>
             ))}
