@@ -69,6 +69,7 @@ Persistence key: `trackerx:v1`
 - **Port already in use**: Stop other dev servers or set a custom port with Vite env/CLI flags.
 - **Reset data**: Clear the site’s local storage for the key `trackerx:v1` in your browser devtools.
 - **Drag and drop issues**: Some browser extensions can interfere with DnD—try disabling them or testing in a private window.
+- **Mobile devices**: This application is optimized for desktop use and may not work optimally on mobile devices.
 
 ### Tech stack
 - React 18, Zustand (state), Vite (build/dev), TypeScript, CSS.
