@@ -83,91 +83,113 @@ export function BoardView() {
     return Math.max(0, Math.floor(diff / (24 * 60 * 60 * 1000)))
   }
 
+  // GIFs to show at the bottom of the board
+  const gifs: string[] = useMemo(() => ([
+    'https://gifdb.com/images/high/rick-and-morty-run-the-jewels-41vqa88b3f85wpa3.webp',
+    'https://imgs.search.brave.com/_NfXXlux4IqexVWERGrItlLWlsTM-nHl_Fuiv3mOaXs/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9naWZk/Yi5jb20vaW1hZ2Vz/L2hpZ2gvcmljay1h/bmQtbW9ydHktZG9u/LXQtaGF0ZS1wbGF5/ZXItdDdxMWZkZzV3/OHc0bjByZS5naWY.gif',
+    'https://gifdb.com/images/high/rick-and-morty-i-always-slay-kxx4kbbefsgy03x6.webp',
+    'https://gifdb.com/images/high/rick-and-morty-riggity-wrecked-son-5oyxyrmavk26f4v3.webp',
+    'https://imgs.search.brave.com/PcGEMWl04rSPJI8jhfMjR5PIg1erfAzrtmurxMQCJk4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRpYTAuZ2lwaHkuY29tL21lZGlhL3YxLlkybGtQVGM1TUdJM05qRXhjM0oyT1hKMGFYZzFNbk0zT1RGMmNqbHhjRGx3TUc5clpYRnNNWFYyTkRVM09EaHdZWFZ3T1NabGNEMTJNVjluYVdaelgzTmxZWEpqYUNaamREMW4vUVlSanc2SnowanlyMUFuUFc5L2dpcGh5LmdpZg.gif'
+  ]), [])
+
+  const pickedGif = useMemo(() => {
+    if (!gifs.length) return ''
+    const index = Math.floor(Math.random() * gifs.length)
+    return gifs[index]
+  }, [gifs])
+
   return (
-    <section className="board">
-      {COLUMNS.map(col => (
-        <div key={col} className="col" onDragOver={onDragOver} onDrop={e => onDrop(e, col)}>
-          <h3>{col}</h3>
-          {col === 'Backlog' && (
-            <div className="add" style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-              <input placeholder="Task title" value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key==='Enter' && onAdd()} />
-              <input list="board-lists" placeholder="List" value={list} onChange={e => setList(e.target.value)} onKeyDown={e => e.key==='Enter' && onAdd()} />
-              <datalist id="board-lists">
-                {existingLists.map(l => (<option key={l} value={l} />))}
-              </datalist>
-              <button onClick={onAdd}>Add</button>
-            </div>
-          )}
-          <ul>
-            {grouped[col].map(t => (
-              <li key={t.id} className={`card status-${col.replace(' ', '').toLowerCase()}`} draggable onDragStart={e => onDragStart(e, t.id)}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
-                    <button title="Delete" aria-label="Delete" onClick={() => { if (confirm('Delete this task?')) deleteTask(t.id) }}>
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <button 
-                        title={t.important ? "Remove important" : "Mark important"}
-                        onClick={() => toggleImportant(t.id)}
-                        style={{ 
-                          background: 'transparent', 
-                          border: 'none', 
-                          padding: 0, 
-                          color: t.important ? '#ef4444' : 'var(--muted)',
-                          cursor: 'pointer',
-                          fontSize: '12px'
-                        }}
-                      >
-                        {t.important ? '!' : '○'}
+    <>
+      <section className="board">
+        {COLUMNS.map(col => (
+          <div key={col} className="col" onDragOver={onDragOver} onDrop={e => onDrop(e, col)}>
+            <h3>{col}</h3>
+            {col === 'Backlog' && (
+              <div className="add" style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <input placeholder="Task title" value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key==='Enter' && onAdd()} />
+                <input list="board-lists" placeholder="List" value={list} onChange={e => setList(e.target.value)} onKeyDown={e => e.key==='Enter' && onAdd()} />
+                <datalist id="board-lists">
+                  {existingLists.map(l => (<option key={l} value={l} />))}
+                </datalist>
+                <button onClick={onAdd}>Add</button>
+              </div>
+            )}
+            <ul>
+              {grouped[col].map(t => (
+                <li key={t.id} className={`card status-${col.replace(' ', '').toLowerCase()}`} draggable onDragStart={e => onDragStart(e, t.id)}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+                      <button title="Delete" aria-label="Delete" onClick={() => { if (confirm('Delete this task?')) deleteTask(t.id) }}>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
                       </button>
-                      <button 
-                        title={t.urgent ? "Remove urgent" : "Mark urgent"}
-                        onClick={() => toggleUrgent(t.id)}
-                        style={{ 
-                          background: 'transparent', 
-                          border: 'none', 
-                          padding: 0, 
-                          color: t.urgent ? '#f97316' : 'var(--muted)',
-                          cursor: 'pointer',
-                          fontSize: '12px'
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <button 
+                          title={t.important ? "Remove important" : "Mark important"}
+                          onClick={() => toggleImportant(t.id)}
+                          style={{ 
+                            background: 'transparent', 
+                            border: 'none', 
+                            padding: 0, 
+                            color: t.important ? '#ef4444' : 'var(--muted)',
+                            cursor: 'pointer',
+                            fontSize: '12px'
+                          }}
+                        >
+                          {t.important ? '!' : '○'}
+                        </button>
+                        <button 
+                          title={t.urgent ? "Remove urgent" : "Mark urgent"}
+                          onClick={() => toggleUrgent(t.id)}
+                          style={{ 
+                            background: 'transparent', 
+                            border: 'none', 
+                            padding: 0, 
+                            color: t.urgent ? '#f97316' : 'var(--muted)',
+                            cursor: 'pointer',
+                            fontSize: '12px'
+                          }}
+                        >
+                          {t.urgent ? '!!' : '○○'}
+                        </button>
+                      </div>
+                      <input
+                        value={t.title}
+                        onChange={e => updateTitle(t.id, e.target.value)}
+                        onBlur={e => updateTitle(t.id, e.target.value)}
+                        className={`title ${t.completedAt ? 'done' : ''}`}
+                        style={{ background: 'transparent', border: 'none', padding: 0, color: 'inherit', minWidth: 0, width: '100%' }}
+                      />
+                    </div>
+                    <div className="meta" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <button
+                        className="badge"
+                        title="Edit list"
+                        onClick={() => {
+                          const next = prompt('Set list name', t.list || 'General')
+                          if (next != null) updateList(t.id, next)
                         }}
-                      >
-                        {t.urgent ? '!!' : '○○'}
+                      >{t.list || 'General'}</button>
+                      <span className="badge" title={`Created ${new Date(t.createdAt).toLocaleDateString()}`}>{daysOld(t.createdAt)}d</span>
+                      <button onClick={() => (t.timerRunning ? pauseTimer(t.id) : startTimer(t.id))}>
+                        {t.timerRunning ? format(computeTotalSeconds(t)) : 'Start'}
                       </button>
                     </div>
-                    <input
-                      value={t.title}
-                      onChange={e => updateTitle(t.id, e.target.value)}
-                      onBlur={e => updateTitle(t.id, e.target.value)}
-                      className={`title ${t.completedAt ? 'done' : ''}`}
-                      style={{ background: 'transparent', border: 'none', padding: 0, color: 'inherit', minWidth: 0, width: '100%' }}
-                    />
                   </div>
-                  <div className="meta" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <button
-                      className="badge"
-                      title="Edit list"
-                      onClick={() => {
-                        const next = prompt('Set list name', t.list || 'General')
-                        if (next != null) updateList(t.id, next)
-                      }}
-                    >{t.list || 'General'}</button>
-                    <span className="badge" title={`Created ${new Date(t.createdAt).toLocaleDateString()}`}>{daysOld(t.createdAt)}d</span>
-                    <button onClick={() => (t.timerRunning ? pauseTimer(t.id) : startTimer(t.id))}>
-                      {t.timerRunning ? format(computeTotalSeconds(t)) : 'Start'}
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </section>
+      {pickedGif && (
+        <div className="gif-section">
+          <img src={pickedGif} alt="Board fun gif" loading="lazy" />
         </div>
-      ))}
-    </section>
+      )}
+    </>
   )
 }
 
