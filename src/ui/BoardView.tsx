@@ -15,9 +15,11 @@ export function BoardView() {
   const toggleUrgent = useStore(s => s.toggleUrgent)
   const startTimer = useStore(s => s.startTimer)
   const pauseTimer = useStore(s => s.pauseTimer)
+  const resetTimer = useStore(s => s.resetTimer)
   const [title, setTitle] = useState('')
   const [list, setList] = useState('')
   const [tick, setTick] = useState(0)
+  const [focusedId, setFocusedId] = useState<string | null>(null)
 
   const grouped = useMemo(() => {
     const map: Record<Column, typeof tasks> = {
@@ -58,6 +60,13 @@ export function BoardView() {
     const id = setInterval(() => setTick(t => t + 1), 1000)
     return () => clearInterval(id)
   }, [tasks])
+
+  // Keep focus in sync with timers: if focused task stops, clear focus
+  useEffect(() => {
+    if (!focusedId) return
+    const f = tasks.find(t => t.id === focusedId)
+    if (!f || !f.timerRunning) setFocusedId(null)
+  }, [tasks, focusedId])
 
   const format = (totalSeconds: number) => {
     const m = String(Math.floor(totalSeconds / 60)).padStart(2, '0')
@@ -116,7 +125,7 @@ export function BoardView() {
             )}
             <ul>
               {grouped[col].map(t => (
-                <li key={t.id} className={`card status-${col.replace(' ', '').toLowerCase()}`} draggable onDragStart={e => onDragStart(e, t.id)}>
+                <li key={t.id} className={`card status-${col.replace(' ', '').toLowerCase()} ${focusedId ? (focusedId === t.id ? 'is-focused' : 'is-dimmed') : ''}`} draggable onDragStart={e => onDragStart(e, t.id)}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
                       <button title="Delete" aria-label="Delete" onClick={() => { if (confirm('Delete this task?')) deleteTask(t.id) }}>
@@ -173,9 +182,18 @@ export function BoardView() {
                         }}
                       >{t.list || 'General'}</button>
                       <span className="badge" title={`Created ${new Date(t.createdAt).toLocaleDateString()}`}>{daysOld(t.createdAt)}d</span>
-                      <button onClick={() => (t.timerRunning ? pauseTimer(t.id) : startTimer(t.id))}>
+                      <button onClick={() => {
+                        if (t.timerRunning) {
+                          pauseTimer(t.id)
+                          setFocusedId(null)
+                        } else {
+                          startTimer(t.id)
+                          setFocusedId(t.id)
+                        }
+                      }}>
                         {t.timerRunning ? format(computeTotalSeconds(t)) : 'Start'}
                       </button>
+                      <button title="Reset timer" onClick={() => { resetTimer(t.id); if (focusedId === t.id) setFocusedId(null) }}>Reset</button>
                     </div>
                   </div>
                 </li>
@@ -184,6 +202,9 @@ export function BoardView() {
           </div>
         ))}
       </section>
+      {focusedId && (
+        <div className="focus-overlay" aria-hidden="true" />
+      )}
       {pickedGif && (
         <div className="gif-section">
           <img src={pickedGif} alt="Board fun gif" loading="lazy" />

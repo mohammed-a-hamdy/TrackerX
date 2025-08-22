@@ -79,4 +79,17 @@ input { flex:1; background:var(--panel); color:var(--text); border:1px solid var
 .gif-section { margin-top: 16px; display:flex; align-items:center; justify-content:center; }
 .gif-section img { max-width: 100%; max-height: 280px; border-radius: 10px; border:1px solid var(--border); }
 
+.focus-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: 0.9; /* 90% blackout, 10% visible */
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Dim all non-focused cards when a focus is active */
+.card.is-dimmed { filter: grayscale(0.8) brightness(0.4); opacity: 0.4; }
+.card.is-focused { position: relative; z-index: 11; box-shadow: 0 0 0 3px rgba(255,255,255,0.2), 0 10px 30px rgba(0,0,0,0.5); }
+
 
