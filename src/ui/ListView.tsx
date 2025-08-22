@@ -34,6 +34,14 @@ export function ListView() {
 
   const existingLists = Object.keys(grouped)
 
+  const daysOld = (iso?: string) => {
+    if (!iso) return 0
+    const created = Date.parse(iso)
+    if (Number.isNaN(created)) return 0
+    const diff = Date.now() - created
+    return Math.max(0, Math.floor(diff / (24 * 60 * 60 * 1000)))
+  }
+
   return (
     <section className="list">
       <div className="add">
@@ -114,6 +122,7 @@ export function ListView() {
                       }}
                     >{t.list || 'General'}</button>
                     <span className="badge">{t.status ?? 'Backlog'}</span>
+                    <span className="badge" title={`Created ${new Date(t.createdAt).toLocaleDateString()}`}>{daysOld(t.createdAt)}d</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <TaskTimer taskId={t.id} />

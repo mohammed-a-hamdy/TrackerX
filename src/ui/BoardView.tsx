@@ -18,8 +18,6 @@ export function BoardView() {
   const [title, setTitle] = useState('')
   const [list, setList] = useState('')
   const [tick, setTick] = useState(0)
-  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
-  const [dragOverColumn, setDragOverColumn] = useState<Column | null>(null)
 
   const grouped = useMemo(() => {
     const map: Record<Column, typeof tasks> = {
@@ -51,8 +49,6 @@ export function BoardView() {
     e.preventDefault()
   }
 
-
-
   const existingLists = Array.from(new Set(tasks.map(t => t.list ?? 'General')))
 
   // Update the board every second while any timer is running
@@ -79,16 +75,18 @@ export function BoardView() {
     return Math.max(0, base)
   }
 
+  const daysOld = (iso?: string) => {
+    if (!iso) return 0
+    const created = Date.parse(iso)
+    if (Number.isNaN(created)) return 0
+    const diff = Date.now() - created
+    return Math.max(0, Math.floor(diff / (24 * 60 * 60 * 1000)))
+  }
+
   return (
     <section className="board">
-      <div className="board-container">
-        {COLUMNS.map((col, index) => (
-          <div 
-            key={col} 
-            className={`col ${dragOverColumn === col ? 'drag-over' : ''}`} 
-            onDragOver={onDragOver} 
-            onDrop={e => onDrop(e, col)}
-          >
+      {COLUMNS.map(col => (
+        <div key={col} className="col" onDragOver={onDragOver} onDrop={e => onDrop(e, col)}>
           <h3>{col}</h3>
           {col === 'Backlog' && (
             <div className="add" style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
@@ -102,12 +100,7 @@ export function BoardView() {
           )}
           <ul>
             {grouped[col].map(t => (
-              <li 
-                key={t.id} 
-                className={`card status-${col.replace(' ', '').toLowerCase()} ${draggedTaskId === t.id ? 'dragging' : ''}`} 
-                draggable 
-                onDragStart={e => onDragStart(e, t.id)}
-              >
+              <li key={t.id} className={`card status-${col.replace(' ', '').toLowerCase()}`} draggable onDragStart={e => onDragStart(e, t.id)}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
                     <button title="Delete" aria-label="Delete" onClick={() => { if (confirm('Delete this task?')) deleteTask(t.id) }}>
@@ -163,6 +156,7 @@ export function BoardView() {
                         if (next != null) updateList(t.id, next)
                       }}
                     >{t.list || 'General'}</button>
+                    <span className="badge" title={`Created ${new Date(t.createdAt).toLocaleDateString()}`}>{daysOld(t.createdAt)}d</span>
                     <button onClick={() => (t.timerRunning ? pauseTimer(t.id) : startTimer(t.id))}>
                       {t.timerRunning ? format(computeTotalSeconds(t)) : 'Start'}
                     </button>
@@ -172,8 +166,7 @@ export function BoardView() {
             ))}
           </ul>
         </div>
-        ))}
-      </div>
+      ))}
     </section>
   )
 }
