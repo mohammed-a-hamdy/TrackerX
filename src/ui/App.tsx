@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
 import { BoardView } from './BoardView'
-import { ListView } from './ListView'
 import { Reports } from './Reports'
 import logo from '../logo.png'
 import quotes from './quotes.json'
 
 export function App() {
-  const [view, setView] = useState<'list' | 'board' | 'reports'>('list')
+  const [view, setView] = useState<'board' | 'reports'>('board')
   const [quote, setQuote] = useState<string>('')
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const stored = localStorage.getItem('trackerx:theme')
@@ -33,7 +32,6 @@ export function App() {
         </h1>
         {quote && <div className="quote" title={quote}>{quote}</div>}
         <nav>
-          <button className={view==='list'? 'active':''} onClick={() => setView('list')}>List</button>
           <button className={view==='board'? 'active':''} onClick={() => setView('board')}>Board</button>
           <button className={view==='reports'? 'active':''} onClick={() => setView('reports')}>Report</button>
           <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} title="Toggle theme" aria-label="Toggle theme">
@@ -52,7 +50,6 @@ export function App() {
         </nav>
       </header>
       <main>
-        {view === 'list' && <ListView />}
         {view === 'board' && <BoardView />}
         {view === 'reports' && <Reports />}
       </main>

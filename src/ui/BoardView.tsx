@@ -1,5 +1,50 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { useStore } from '../useStore'
+
+// Custom hook for auto-resizing textareas
+const useAutoResize = (value: string) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  
+  const adjustHeight = useCallback(() => {
+    const textarea = textareaRef.current
+    if (textarea) {
+      textarea.style.height = 'auto'
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`
+    }
+  }, [])
+  
+  useEffect(() => {
+    adjustHeight()
+  }, [value, adjustHeight])
+  
+  return { textareaRef, adjustHeight }
+}
+
+// Auto-resizing textarea component for task titles
+const TaskTitleTextarea = ({ value, onChange, onBlur, className, style }: {
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
+  onBlur: (e: React.FocusEvent<HTMLTextAreaElement>) => void
+  className: string
+  style: React.CSSProperties
+}) => {
+  const { textareaRef, adjustHeight } = useAutoResize(value)
+  
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={e => {
+        onChange(e)
+        adjustHeight()
+      }}
+      onBlur={onBlur}
+      className={className}
+      rows={1}
+      style={style}
+    />
+  )
+}
 
 const COLUMNS = ['Backlog', 'In Progress', 'Done'] as const
 type Column = typeof COLUMNS[number]
@@ -20,6 +65,9 @@ export function BoardView() {
   const [list, setList] = useState('')
   const [tick, setTick] = useState(0)
   const [focusedId, setFocusedId] = useState<string | null>(null)
+  
+  // Auto-resize hook for the title textarea
+  const { textareaRef: titleTextareaRef, adjustHeight: adjustTitleHeight } = useAutoResize(title)
 
   const grouped = useMemo(() => {
     const map: Record<Column, typeof tasks> = {
@@ -114,9 +162,32 @@ export function BoardView() {
           <div key={col} className="col" onDragOver={onDragOver} onDrop={e => onDrop(e, col)}>
             <h3>{col}</h3>
             {col === 'Backlog' && (
-              <div className="add" style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                <input placeholder="Task title" value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key==='Enter' && onAdd()} />
-                <input list="board-lists" placeholder="List" value={list} onChange={e => setList(e.target.value)} onKeyDown={e => e.key==='Enter' && onAdd()} />
+              <div className="add" style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
+                <textarea 
+                  ref={titleTextareaRef}
+                  placeholder="Task title" 
+                  value={title} 
+                  onChange={e => {
+                    setTitle(e.target.value);
+                    adjustTitleHeight();
+                  }} 
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      onAdd();
+                    }
+                  }}
+                  style={{ flex: '2 1 auto', minWidth: '120px', maxHeight: '80px' }}
+                  rows={1}
+                />
+                <input 
+                  list="board-lists" 
+                  placeholder="List" 
+                  value={list} 
+                  onChange={e => setList(e.target.value)} 
+                  onKeyDown={e => e.key==='Enter' && onAdd()}
+                  style={{ flex: '1 1 auto', minWidth: '80px' }}
+                />
                 <datalist id="board-lists">
                   {existingLists.map(l => (<option key={l} value={l} />))}
                 </datalist>
@@ -164,12 +235,27 @@ export function BoardView() {
                           {t.urgent ? '!!' : '○○'}
                         </button>
                       </div>
-                      <input
+                      <TaskTitleTextarea
                         value={t.title}
                         onChange={e => updateTitle(t.id, e.target.value)}
                         onBlur={e => updateTitle(t.id, e.target.value)}
                         className={`title ${t.completedAt ? 'done' : ''}`}
-                        style={{ background: 'transparent', border: 'none', padding: 0, color: 'inherit', minWidth: 0, width: '100%' }}
+                        style={{ 
+                          background: 'transparent', 
+                          border: 'none', 
+                          padding: 0, 
+                          color: 'inherit', 
+                          minWidth: 0, 
+                          width: '100%',
+                          flex: '1 1 auto',
+                          overflow: 'hidden',
+                          resize: 'none',
+                          minHeight: 'auto',
+                          maxHeight: '60px',
+                          fontFamily: 'inherit',
+                          fontSize: 'inherit',
+                          lineHeight: '1.4'
+                        }}
                       />
                     </div>
                     <div className="meta" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

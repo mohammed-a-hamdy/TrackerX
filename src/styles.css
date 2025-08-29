@@ -34,6 +34,7 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Helve
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 .topbar nav { display:flex; gap:8px; }
@@ -43,7 +44,27 @@ button.active, button:hover { border-color: var(--accent); }
 .app main { padding: 16px; }
 
 .list .add { display:flex; gap:8px; margin-bottom: 12px; }
-input { flex:1; background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:8px 10px; }
+input, textarea { 
+  flex: 1 1 auto; 
+  min-width: 0; 
+  background: var(--panel); 
+  color: var(--text); 
+  border: 1px solid var(--border); 
+  border-radius: 8px; 
+  padding: 8px 10px; 
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.4;
+  resize: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+textarea {
+  min-height: 36px;
+  max-height: 120px;
+  overflow-y: auto;
+}
 .list ul { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; }
 .list li { background: var(--panel); border:1px solid var(--border); padding:8px 10px; border-radius:10px; }
 .list .done { text-decoration: line-through; color: var(--muted); }
