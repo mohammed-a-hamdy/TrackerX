@@ -113,4 +113,88 @@ textarea {
 .card.is-dimmed { filter: grayscale(0.8) brightness(0.4); opacity: 0.4; }
 .card.is-focused { position: relative; z-index: 11; box-shadow: 0 0 0 3px rgba(255,255,255,0.2), 0 10px 30px rgba(0,0,0,0.5); }
 
+/* Notepad Styles */
+.notepad-container {
+  width: 100%;
+  height: calc(100vh - 120px);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.notepad-header {
+  text-align: center;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.notepad-header h2 {
+  font-size: 2rem;
+  margin: 0;
+  color: var(--text);
+}
+
+.notebook {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.notebook-margin {
+  width: 80px;
+  background: linear-gradient(to right, transparent 78px, #e74c3c 78px, #e74c3c 80px);
+  border-right: 2px solid #e74c3c;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.notebook-margin::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 25px;
+  width: 2px;
+  height: 100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 26px,
+    #3498db 26px,
+    #3498db 28px
+  );
+}
+
+.notebook-content {
+  flex: 1;
+  position: relative;
+  background: 
+    linear-gradient(to bottom, transparent 27px, var(--border) 27px, var(--border) 28px, transparent 28px),
+    var(--panel);
+  background-size: 100% 28px;
+  background-position: 0 12px;
+}
+
+.notebook-editor {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  padding: 16px 20px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  line-height: 28px;
+  color: var(--text);
+  resize: none;
+  outline: none;
+  overflow-y: auto;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+
+
 

@@ -127,6 +127,36 @@ const pageStyles = {
     fontSize: '14px',
     color: '#495057',
   },
+  contextMenu: {
+    position: 'absolute' as const,
+    zIndex: 1000,
+    backgroundColor: 'white',
+    border: '1px solid #dee2e6',
+    borderRadius: '6px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    padding: '4px 0',
+    minWidth: '160px',
+  },
+  contextMenuItem: {
+    width: '100%',
+    padding: '8px 12px',
+    border: 'none',
+    backgroundColor: 'transparent',
+    textAlign: 'left' as const,
+    cursor: 'pointer',
+    fontSize: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  contextMenuHeader: {
+    padding: '6px 12px',
+    fontSize: '12px',
+    fontWeight: 600,
+    color: '#6c757d',
+    borderBottom: '1px solid #e9ecef',
+    marginBottom: '4px',
+  },
   helpPanel: {
     position: 'absolute' as const,
     top: '80px',
@@ -316,12 +346,17 @@ interface MindMapPageProps {
 }
 
 export function MindMapPage({ onBack }: MindMapPageProps) {
-  const { tasks, connections, addConnection, removeConnection } = useStore()
+  const { tasks, connections, nodePositions, addConnection, removeConnection, updateConnectionType, updateNodePosition, clearNodePositions } = useStore()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [selectedLayout, setSelectedLayout] = useState<'circular' | 'hierarchical' | 'grid'>('circular')
   const [selectedListFilter, setSelectedListFilter] = useState<string>('all')
   const [selectedStatusFilters, setSelectedStatusFilters] = useState<Set<string>>(new Set(['Backlog', 'In Progress', 'Done']))
+  const [connectionContextMenu, setConnectionContextMenu] = useState<{
+    connectionId: string
+    x: number
+    y: number
+  } | null>(null)
 
   // Get available lists for filter dropdown
   const availableLists = useMemo(() => {
@@ -347,6 +382,12 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
     setSelectedListFilter('all')
     setSelectedStatusFilters(new Set(['Backlog', 'In Progress', 'Done']))
   }, [])
+
+  // Helper function to get node position
+  const getNodePosition = useCallback((nodeId: string, defaultX: number, defaultY: number) => {
+    const savedPosition = nodePositions.find(p => p.id === nodeId)
+    return savedPosition ? { x: savedPosition.x, y: savedPosition.y } : { x: defaultX, y: defaultY }
+  }, [nodePositions])
 
   // Generate nodes and edges from tasks
   const { taskNodes, taskEdges } = useMemo(() => {
@@ -386,7 +427,7 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
         nodes.push({
           id: `list-${list}`,
           type: 'default',
-          position: { x: centerX - 50, y: centerY - 25 },
+          position: getNodePosition(`list-${list}`, centerX - 50, centerY - 25),
           data: { label: list },
           style: {
             background: '#e9ecef',
@@ -407,7 +448,7 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
           nodes.push({
             id: task.id,
             type: 'taskNode',
-            position: { x: x - 100, y: y - 50 },
+            position: getNodePosition(task.id, x - 100, y - 50),
             data: { task },
           })
 
@@ -438,7 +479,7 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
           nodes.push({
             id: task.id,
             type: 'taskNode',
-            position: { x, y },
+            position: getNodePosition(task.id, x, y),
             data: { task },
           })
 
@@ -462,7 +503,7 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
         nodes.push({
           id: task.id,
           type: 'taskNode',
-          position: { x: col * 250, y: row * 200 },
+          position: getNodePosition(task.id, col * 250, row * 200),
           data: { task },
         })
       })
@@ -497,7 +538,7 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
 
     const allEdges = [...layoutEdges, ...connectionEdges]
     return { taskNodes: nodes, taskEdges: allEdges }
-  }, [tasks, connections, selectedLayout, selectedListFilter, selectedStatusFilters])
+  }, [tasks, connections, selectedLayout, selectedListFilter, selectedStatusFilters, getNodePosition])
 
   // Update nodes and edges when tasks change
   useEffect(() => {
@@ -518,7 +559,7 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
     (event: React.MouseEvent, edge: Edge) => {
       event.preventDefault()
       if (edge.data?.type === 'user-connection') {
-        if (confirm('Delete this connection?')) {
+        if (confirm('Delete this connection? (Double-click to change type)')) {
           removeConnection(edge.id)
         }
       }
@@ -526,8 +567,53 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
     [removeConnection]
   )
 
+  const onEdgeDoubleClick = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.preventDefault()
+      if (edge.data?.type === 'user-connection') {
+        setConnectionContextMenu({
+          connectionId: edge.id,
+          x: event.clientX,
+          y: event.clientY
+        })
+      }
+    },
+    []
+  )
+
+  const handleConnectionTypeChange = useCallback((connectionId: string, newType: TaskConnection['type']) => {
+    updateConnectionType(connectionId, newType)
+    setConnectionContextMenu(null)
+  }, [updateConnectionType])
+
+  const handleContextMenuClose = useCallback(() => {
+    setConnectionContextMenu(null)
+  }, [])
+
+  // Close context menu when clicking elsewhere
+  const handleContainerClick = useCallback(() => {
+    if (connectionContextMenu) {
+      setConnectionContextMenu(null)
+    }
+  }, [connectionContextMenu])
+
+  // Handle node position changes (when dragged)
+  const handleNodesChange = useCallback(
+    (changes: any[]) => {
+      onNodesChange(changes)
+      
+      // Save position changes
+      changes.forEach((change) => {
+        if (change.type === 'position' && change.position && change.dragging === false) {
+          updateNodePosition(change.id, change.position.x, change.position.y)
+        }
+      })
+    },
+    [onNodesChange, updateNodePosition]
+  )
+
   return (
-    <div style={pageStyles.container}>
+    <div style={pageStyles.container} onClick={handleContainerClick}>
       <header style={pageStyles.header}>
         <h1 style={pageStyles.title}>Mind Map - Task Connections</h1>
         <button 
@@ -604,6 +690,20 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
             Clear Filters
           </button>
         </div>
+
+        <div style={pageStyles.controlPanel}>
+          <button
+            onClick={clearNodePositions}
+            style={{
+              ...pageStyles.clearButton,
+              backgroundColor: '#fff3cd',
+              borderColor: '#ffeaa7',
+              color: '#856404'
+            }}
+          >
+            Reset Positions
+          </button>
+        </div>
         
         <div style={pageStyles.controlPanel}>
           <div>Tasks: {tasks.length}</div>
@@ -613,25 +713,78 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
       </div>
 
       <div style={pageStyles.helpPanel}>
-        <h3 style={pageStyles.helpTitle}>How to Connect Tasks:</h3>
+        <h3 style={pageStyles.helpTitle}>Mind Map Controls:</h3>
         <ul style={pageStyles.helpList}>
-          <li style={pageStyles.helpItem}>• Drag from task handle to another task</li>
+          <li style={pageStyles.helpItem}>• Drag nodes to reposition (saved automatically)</li>
+          <li style={pageStyles.helpItem}>• Drag from task handles to create connections</li>
           <li style={pageStyles.helpItem}>• Click connection to delete it</li>
+          <li style={pageStyles.helpItem}>• Double-click connection to change type</li>
           <li style={pageStyles.helpItem}>• <span style={{color: '#0d6efd'}}>Blue</span>: Related tasks</li>
           <li style={pageStyles.helpItem}>• <span style={{color: '#dc3545'}}>Red</span>: Dependencies</li>
           <li style={pageStyles.helpItem}>• <span style={{color: '#fd7e14'}}>Orange</span>: Blocking tasks</li>
         </ul>
       </div>
 
+      {/* Connection Type Context Menu */}
+      {connectionContextMenu && (
+        <div
+          style={{
+            ...pageStyles.contextMenu,
+            left: connectionContextMenu.x,
+            top: connectionContextMenu.y,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div style={pageStyles.contextMenuHeader}>
+            Change Connection Type
+          </div>
+          {['related', 'dependency', 'blocks'].map((type) => (
+            <button
+              key={type}
+              onClick={() => handleConnectionTypeChange(connectionContextMenu.connectionId, type as TaskConnection['type'])}
+              style={pageStyles.contextMenuItem}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <span 
+                style={{
+                  width: '12px',
+                  height: '2px',
+                  borderRadius: '1px',
+                  backgroundColor: 
+                    type === 'dependency' ? '#dc3545' :
+                    type === 'blocks' ? '#fd7e14' : '#0d6efd'
+                }}
+              />
+              <span style={{ textTransform: 'capitalize' }}>{type}</span>
+            </button>
+          ))}
+          <div style={{ borderTop: '1px solid #e9ecef', marginTop: '4px' }}>
+            <button
+              onClick={handleContextMenuClose}
+              style={{
+                ...pageStyles.contextMenuItem,
+                color: '#6c757d'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       <div style={pageStyles.flowContainer}>
         <ReactFlowProvider>
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodesChange}
+            onNodesChange={handleNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onEdgeClick={onEdgeClick}
+            onEdgeDoubleClick={onEdgeDoubleClick}
             nodeTypes={nodeTypes}
             fitView
             fitViewOptions={{ padding: 0.2 }}

@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { BoardView } from './BoardView'
 import { Reports } from './Reports'
 import { MindMapPage } from './MindMapPage'
+import { Notepad } from './Notepad'
 import logo from '../logo.png'
 import quotes from './quotes.json'
 
 export function App() {
-  const [view, setView] = useState<'board' | 'reports' | 'mindmap'>('board')
+  const [view, setView] = useState<'board' | 'reports' | 'mindmap' | 'notepad'>('board')
   const [quote, setQuote] = useState<string>('')
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const stored = localStorage.getItem('trackerx:theme')
@@ -41,6 +42,7 @@ export function App() {
           <button className={view==='board'? 'active':''} onClick={() => setView('board')}>Board</button>
           <button className={view==='reports'? 'active':''} onClick={() => setView('reports')}>Report</button>
           <button className={view==='mindmap'? 'active':''} onClick={() => setView('mindmap')}>Mind Map</button>
+          <button className={view==='notepad'? 'active':''} onClick={() => setView('notepad')}>Notepad</button>
           <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} title="Toggle theme" aria-label="Toggle theme">
             {theme === 'dark' ? (
               // Show full moon icon when in dark theme
@@ -59,6 +61,7 @@ export function App() {
       <main>
         {view === 'board' && <BoardView />}
         {view === 'reports' && <Reports />}
+        {view === 'notepad' && <Notepad />}
       </main>
     </div>
   )

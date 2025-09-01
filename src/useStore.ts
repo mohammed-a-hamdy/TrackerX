@@ -24,9 +24,17 @@ export type TaskConnection = {
   type?: 'dependency' | 'related' | 'blocks'
 }
 
+export type NodePosition = {
+  id: string
+  x: number
+  y: number
+}
+
 type Store = {
   tasks: Task[]
   connections: TaskConnection[]
+  nodePositions: NodePosition[]
+  notes: string
   addTask: (input: { title: string; list?: string }) => void
   toggleDone: (id: string) => void
   moveTo: (id: string, status: NonNullable<Task['status']>) => void
@@ -41,10 +49,15 @@ type Store = {
   addConnection: (sourceId: string, targetId: string, type?: TaskConnection['type']) => void
   removeConnection: (connectionId: string) => void
   updateConnectionType: (connectionId: string, type: TaskConnection['type']) => void
+  updateNodePosition: (nodeId: string, x: number, y: number) => void
+  clearNodePositions: () => void
+  updateNotes: (notes: string) => void
 }
 
 const STORAGE_KEY = 'trackerx:v1'
 const CONNECTIONS_KEY = 'trackerx:connections:v1'
+const POSITIONS_KEY = 'trackerx:positions:v1'
+const NOTES_KEY = 'trackerx:notes:v1'
 
 function load(): Task[] {
   try {
@@ -91,6 +104,20 @@ function loadConnections(): TaskConnection[] {
   }
 }
 
+function loadNodePositions(): NodePosition[] {
+  try {
+    const raw = localStorage.getItem(POSITIONS_KEY)
+    const parsed = raw ? JSON.parse(raw) as any[] : []
+    return parsed.map((p: any) => ({
+      id: String(p?.id ?? ''),
+      x: typeof p?.x === 'number' ? p.x : 0,
+      y: typeof p?.y === 'number' ? p.y : 0
+    }))
+  } catch {
+    return []
+  }
+}
+
 function save(tasks: Task[]) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)) } catch {}
 }
@@ -99,9 +126,27 @@ function saveConnections(connections: TaskConnection[]) {
   try { localStorage.setItem(CONNECTIONS_KEY, JSON.stringify(connections)) } catch {}
 }
 
+function saveNodePositions(positions: NodePosition[]) {
+  try { localStorage.setItem(POSITIONS_KEY, JSON.stringify(positions)) } catch {}
+}
+
+function loadNotes(): string {
+  try {
+    return localStorage.getItem(NOTES_KEY) || ''
+  } catch {
+    return ''
+  }
+}
+
+function saveNotes(notes: string) {
+  try { localStorage.setItem(NOTES_KEY, notes) } catch {}
+}
+
 export const useStore = create<Store>((set, get) => ({
   tasks: load(),
   connections: loadConnections(),
+  nodePositions: loadNodePositions(),
+  notes: loadNotes(),
   addTask: ({ title, list }) => set(state => {
     const task: Task = {
       id: crypto.randomUUID(),
@@ -250,6 +295,30 @@ export const useStore = create<Store>((set, get) => ({
     )
     saveConnections(connections)
     return { connections }
+  }),
+  updateNodePosition: (nodeId, x, y) => set(state => {
+    const existing = state.nodePositions.find(p => p.id === nodeId)
+    let nodePositions: NodePosition[]
+    
+    if (existing) {
+      nodePositions = state.nodePositions.map(p => 
+        p.id === nodeId ? { ...p, x, y } : p
+      )
+    } else {
+      nodePositions = [...state.nodePositions, { id: nodeId, x, y }]
+    }
+    
+    saveNodePositions(nodePositions)
+    return { nodePositions }
+  }),
+  clearNodePositions: () => set(state => {
+    const nodePositions: NodePosition[] = []
+    saveNodePositions(nodePositions)
+    return { nodePositions }
+  }),
+  updateNotes: (notes) => set(state => {
+    saveNotes(notes)
+    return { notes }
   })
 }))
 
