@@ -96,6 +96,37 @@ const pageStyles = {
     fontSize: '14px',
     cursor: 'pointer',
   },
+  filterPanel: {
+    backgroundColor: 'white',
+    border: '1px solid #dee2e6',
+    borderRadius: '8px',
+    padding: '12px',
+    fontSize: '14px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    minWidth: '200px',
+  },
+  statusFilters: {
+    display: 'flex',
+    gap: '8px',
+    flexWrap: 'wrap' as const,
+    marginTop: '8px',
+  },
+  checkboxLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    cursor: 'pointer',
+    fontSize: '13px',
+  },
+  clearButton: {
+    padding: '6px 12px',
+    backgroundColor: '#f8f9fa',
+    border: '1px solid #dee2e6',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    color: '#495057',
+  },
   helpPanel: {
     position: 'absolute' as const,
     top: '80px',
@@ -289,10 +320,50 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [selectedLayout, setSelectedLayout] = useState<'circular' | 'hierarchical' | 'grid'>('circular')
+  const [selectedListFilter, setSelectedListFilter] = useState<string>('all')
+  const [selectedStatusFilters, setSelectedStatusFilters] = useState<Set<string>>(new Set(['Backlog', 'In Progress', 'Done']))
+
+  // Get available lists for filter dropdown
+  const availableLists = useMemo(() => {
+    const lists = [...new Set(tasks.map(task => task.list || 'General'))]
+    return lists.sort()
+  }, [tasks])
+
+  // Handle status filter toggle
+  const toggleStatusFilter = useCallback((status: string) => {
+    setSelectedStatusFilters(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(status)) {
+        newSet.delete(status)
+      } else {
+        newSet.add(status)
+      }
+      return newSet
+    })
+  }, [])
+
+  // Clear all filters
+  const clearAllFilters = useCallback(() => {
+    setSelectedListFilter('all')
+    setSelectedStatusFilters(new Set(['Backlog', 'In Progress', 'Done']))
+  }, [])
 
   // Generate nodes and edges from tasks
   const { taskNodes, taskEdges } = useMemo(() => {
-    const tasksByList = tasks.reduce((acc, task) => {
+    // Filter tasks by selected list and status
+    let filteredTasks = tasks
+
+    // Filter by list
+    if (selectedListFilter !== 'all') {
+      filteredTasks = filteredTasks.filter(task => (task.list || 'General') === selectedListFilter)
+    }
+
+    // Filter by status
+    filteredTasks = filteredTasks.filter(task => 
+      selectedStatusFilters.has(task.status || 'Backlog')
+    )
+
+    const tasksByList = filteredTasks.reduce((acc, task) => {
       const list = task.list || 'General'
       if (!acc[list]) acc[list] = []
       acc[list].push(task)
@@ -351,7 +422,7 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
       })
     } else if (selectedLayout === 'hierarchical') {
       const statusOrder = ['Backlog', 'In Progress', 'Done']
-      const tasksByStatus = tasks.reduce((acc, task) => {
+      const tasksByStatus = filteredTasks.reduce((acc, task) => {
         const status = task.status || 'Backlog'
         if (!acc[status]) acc[status] = []
         acc[status].push(task)
@@ -384,8 +455,8 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
         })
       })
     } else {
-      const columns = Math.ceil(Math.sqrt(tasks.length))
-      tasks.forEach((task, index) => {
+      const columns = Math.ceil(Math.sqrt(filteredTasks.length))
+      filteredTasks.forEach((task, index) => {
         const row = Math.floor(index / columns)
         const col = index % columns
         nodes.push({
@@ -426,7 +497,7 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
 
     const allEdges = [...layoutEdges, ...connectionEdges]
     return { taskNodes: nodes, taskEdges: allEdges }
-  }, [tasks, connections, selectedLayout])
+  }, [tasks, connections, selectedLayout, selectedListFilter, selectedStatusFilters])
 
   // Update nodes and edges when tasks change
   useEffect(() => {
@@ -489,11 +560,55 @@ export function MindMapPage({ onBack }: MindMapPageProps) {
             <option value="grid">Grid Layout</option>
           </select>
         </div>
+
+        <div style={pageStyles.filterPanel}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+            Filter by List:
+          </label>
+          <select
+            value={selectedListFilter}
+            onChange={(e) => setSelectedListFilter(e.target.value)}
+            style={pageStyles.select}
+          >
+            <option value="all">All Lists</option>
+            {availableLists.map(list => (
+              <option key={list} value={list}>{list}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={pageStyles.filterPanel}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+            Filter by Status:
+          </label>
+          <div style={pageStyles.statusFilters}>
+            {['Backlog', 'In Progress', 'Done'].map(status => (
+              <label key={status} style={pageStyles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={selectedStatusFilters.has(status)}
+                  onChange={() => toggleStatusFilter(status)}
+                  style={{ margin: 0 }}
+                />
+                <span>{status}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div style={pageStyles.controlPanel}>
+          <button
+            onClick={clearAllFilters}
+            style={pageStyles.clearButton}
+          >
+            Clear Filters
+          </button>
+        </div>
         
         <div style={pageStyles.controlPanel}>
           <div>Tasks: {tasks.length}</div>
+          <div>Filtered: {taskNodes.filter(n => n.type === 'taskNode').length}</div>
           <div>Connections: {connections.length}</div>
-          <div>Nodes: {nodes.length}</div>
         </div>
       </div>
 

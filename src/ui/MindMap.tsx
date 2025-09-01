@@ -114,10 +114,50 @@ export function MindMap() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [selectedLayout, setSelectedLayout] = useState<'circular' | 'hierarchical' | 'grid'>('circular')
+  const [selectedListFilter, setSelectedListFilter] = useState<string>('all')
+  const [selectedStatusFilters, setSelectedStatusFilters] = useState<Set<string>>(new Set(['Backlog', 'In Progress', 'Done']))
+
+  // Get available lists for filter dropdown
+  const availableLists = useMemo(() => {
+    const lists = [...new Set(tasks.map(task => task.list || 'General'))]
+    return lists.sort()
+  }, [tasks])
+
+  // Handle status filter toggle
+  const toggleStatusFilter = useCallback((status: string) => {
+    setSelectedStatusFilters(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(status)) {
+        newSet.delete(status)
+      } else {
+        newSet.add(status)
+      }
+      return newSet
+    })
+  }, [])
+
+  // Clear all filters
+  const clearAllFilters = useCallback(() => {
+    setSelectedListFilter('all')
+    setSelectedStatusFilters(new Set(['Backlog', 'In Progress', 'Done']))
+  }, [])
 
   // Generate nodes and edges from tasks
   const { taskNodes, taskEdges } = useMemo(() => {
-    const tasksByList = tasks.reduce((acc, task) => {
+    // Filter tasks by selected list and status
+    let filteredTasks = tasks
+
+    // Filter by list
+    if (selectedListFilter !== 'all') {
+      filteredTasks = filteredTasks.filter(task => (task.list || 'General') === selectedListFilter)
+    }
+
+    // Filter by status
+    filteredTasks = filteredTasks.filter(task => 
+      selectedStatusFilters.has(task.status || 'Backlog')
+    )
+
+    const tasksByList = filteredTasks.reduce((acc, task) => {
       const list = task.list || 'General'
       if (!acc[list]) acc[list] = []
       acc[list].push(task)
@@ -187,7 +227,7 @@ export function MindMap() {
     } else if (selectedLayout === 'hierarchical') {
       // Hierarchical layout by status
       const statusOrder = ['Backlog', 'In Progress', 'Done']
-      const tasksByStatus = tasks.reduce((acc, task) => {
+      const tasksByStatus = filteredTasks.reduce((acc, task) => {
         const status = task.status || 'Backlog'
         if (!acc[status]) acc[status] = []
         acc[status].push(task)
@@ -222,8 +262,8 @@ export function MindMap() {
       })
     } else {
       // Grid layout
-      const columns = Math.ceil(Math.sqrt(tasks.length))
-      tasks.forEach((task, index) => {
+      const columns = Math.ceil(Math.sqrt(filteredTasks.length))
+      filteredTasks.forEach((task, index) => {
         const row = Math.floor(index / columns)
         const col = index % columns
         nodes.push({
@@ -264,7 +304,7 @@ export function MindMap() {
 
     const allEdges = [...layoutEdges, ...connectionEdges]
     return { taskNodes: nodes, taskEdges: allEdges }
-  }, [tasks, connections, selectedLayout])
+  }, [tasks, connections, selectedLayout, selectedListFilter, selectedStatusFilters])
 
   // Update nodes and edges when tasks change
   useMemo(() => {
@@ -307,7 +347,7 @@ export function MindMap() {
           </div>
         )}
         
-        <div className="absolute top-4 left-4 z-10 flex gap-2">
+        <div className="absolute top-4 left-4 z-10 flex flex-wrap gap-2 max-w-2xl">
         <select
           value={selectedLayout}
           onChange={(e) => setSelectedLayout(e.target.value as any)}
@@ -317,9 +357,44 @@ export function MindMap() {
           <option value="hierarchical">Hierarchical Layout</option>
           <option value="grid">Grid Layout</option>
         </select>
+
+        <select
+          value={selectedListFilter}
+          onChange={(e) => setSelectedListFilter(e.target.value)}
+          className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm"
+        >
+          <option value="all">All Lists</option>
+          {availableLists.map(list => (
+            <option key={list} value={list}>{list}</option>
+          ))}
+        </select>
+
+        <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm">
+          <div className="font-medium mb-1">Status Filter:</div>
+          <div className="flex gap-2">
+            {['Backlog', 'In Progress', 'Done'].map(status => (
+              <label key={status} className="flex items-center gap-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedStatusFilters.has(status)}
+                  onChange={() => toggleStatusFilter(status)}
+                  className="w-3 h-3"
+                />
+                <span className="text-xs">{status}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        
+        <button
+          onClick={clearAllFilters}
+          className="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+        >
+          Clear Filters
+        </button>
         
         <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm">
-          Tasks: {tasks.length} | Connections: {connections.length} | Nodes: {nodes.length}
+          Tasks: {tasks.length} | Filtered: {taskNodes.filter(n => n.type === 'taskNode').length} | Connections: {connections.length}
         </div>
       </div>
 
