@@ -21,9 +21,6 @@ export function Notepad() {
 
   return (
     <div className="notepad-container">
-      <div className="notepad-header">
-        <h2>📝 Notepad</h2>
-      </div>
       
       <div className="notebook">
         <div className="notebook-margin"></div>

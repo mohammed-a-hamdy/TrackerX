@@ -17,7 +17,7 @@
   --border: #e5e7eb;
 }
 * { box-sizing: border-box; }
-body { margin: 0; font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, Apple Color Emoji, Segoe UI Emoji; background: var(--bg); color: var(--text); }
+body { margin: 0; font-family: 'Nunito', ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, Apple Color Emoji, Segoe UI Emoji; background: var(--bg); color: var(--text); }
 
 .topbar { display:flex; align-items:center; justify-content:space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--panel); position: sticky; top: 0; }
 .topbar h1 { margin: 0; font-size: 18px; letter-spacing: 0.3px; }
@@ -184,7 +184,7 @@ textarea {
   background: transparent;
   border: none;
   padding: 16px 20px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 18px;
   line-height: 28px;
   color: var(--text);
