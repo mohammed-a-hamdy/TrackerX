@@ -16,8 +16,17 @@ export type Task = {
   timerStartedAt?: string
 }
 
+export type TaskConnection = {
+  id: string
+  sourceId: string
+  targetId: string
+  label?: string
+  type?: 'dependency' | 'related' | 'blocks'
+}
+
 type Store = {
   tasks: Task[]
+  connections: TaskConnection[]
   addTask: (input: { title: string; list?: string }) => void
   toggleDone: (id: string) => void
   moveTo: (id: string, status: NonNullable<Task['status']>) => void
@@ -29,9 +38,13 @@ type Store = {
   startTimer: (id: string) => void
   pauseTimer: (id: string) => void
   resetTimer: (id: string, seconds?: number) => void
+  addConnection: (sourceId: string, targetId: string, type?: TaskConnection['type']) => void
+  removeConnection: (connectionId: string) => void
+  updateConnectionType: (connectionId: string, type: TaskConnection['type']) => void
 }
 
 const STORAGE_KEY = 'trackerx:v1'
+const CONNECTIONS_KEY = 'trackerx:connections:v1'
 
 function load(): Task[] {
   try {
@@ -62,12 +75,33 @@ function load(): Task[] {
   }
 }
 
+function loadConnections(): TaskConnection[] {
+  try {
+    const raw = localStorage.getItem(CONNECTIONS_KEY)
+    const parsed = raw ? JSON.parse(raw) as any[] : []
+    return parsed.map((c: any) => ({
+      id: c?.id ?? crypto.randomUUID(),
+      sourceId: String(c?.sourceId ?? ''),
+      targetId: String(c?.targetId ?? ''),
+      label: c?.label,
+      type: c?.type ?? 'related'
+    }))
+  } catch {
+    return []
+  }
+}
+
 function save(tasks: Task[]) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)) } catch {}
 }
 
+function saveConnections(connections: TaskConnection[]) {
+  try { localStorage.setItem(CONNECTIONS_KEY, JSON.stringify(connections)) } catch {}
+}
+
 export const useStore = create<Store>((set, get) => ({
   tasks: load(),
+  connections: loadConnections(),
   addTask: ({ title, list }) => set(state => {
     const task: Task = {
       id: crypto.randomUUID(),
@@ -186,6 +220,36 @@ export const useStore = create<Store>((set, get) => ({
     const tasks = state.tasks.map(t => t.id === id ? { ...t, timerSeconds: seconds, timerRunning: false, timerStartedAt: undefined } : t)
     save(tasks)
     return { tasks }
+  }),
+  addConnection: (sourceId, targetId, type = 'related') => set(state => {
+    // Prevent duplicate connections
+    const exists = state.connections.some(c => 
+      (c.sourceId === sourceId && c.targetId === targetId) || 
+      (c.sourceId === targetId && c.targetId === sourceId)
+    )
+    if (exists || sourceId === targetId) return state
+
+    const connection: TaskConnection = {
+      id: crypto.randomUUID(),
+      sourceId,
+      targetId,
+      type
+    }
+    const connections = [...state.connections, connection]
+    saveConnections(connections)
+    return { connections }
+  }),
+  removeConnection: (connectionId) => set(state => {
+    const connections = state.connections.filter(c => c.id !== connectionId)
+    saveConnections(connections)
+    return { connections }
+  }),
+  updateConnectionType: (connectionId, type) => set(state => {
+    const connections = state.connections.map(c => 
+      c.id === connectionId ? { ...c, type } : c
+    )
+    saveConnections(connections)
+    return { connections }
   })
 }))
 

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { BoardView } from './BoardView'
 import { Reports } from './Reports'
+import { MindMapPage } from './MindMapPage'
 import logo from '../logo.png'
 import quotes from './quotes.json'
 
 export function App() {
-  const [view, setView] = useState<'board' | 'reports'>('board')
+  const [view, setView] = useState<'board' | 'reports' | 'mindmap'>('board')
   const [quote, setQuote] = useState<string>('')
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const stored = localStorage.getItem('trackerx:theme')
@@ -16,12 +17,17 @@ export function App() {
     const local = quotes as Array<{ q: string; a: string }>
     if (!Array.isArray(local) || local.length === 0) return
     const picked = local[Math.floor(Math.random() * local.length)]
-    if (picked?.q && picked?.a) setQuote(`“${picked.q}” ~ ${picked.a}`)
+    if (picked?.q && picked?.a) setQuote(`"${picked.q}" ~ ${picked.a}`)
   }, [])
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     try { localStorage.setItem('trackerx:theme', theme) } catch {}
   }, [theme])
+
+  // Render standalone mind map page
+  if (view === 'mindmap') {
+    return <MindMapPage onBack={() => setView('board')} />
+  }
 
   return (
     <div className="app">
@@ -34,6 +40,7 @@ export function App() {
         <nav>
           <button className={view==='board'? 'active':''} onClick={() => setView('board')}>Board</button>
           <button className={view==='reports'? 'active':''} onClick={() => setView('reports')}>Report</button>
+          <button className={view==='mindmap'? 'active':''} onClick={() => setView('mindmap')}>Mind Map</button>
           <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} title="Toggle theme" aria-label="Toggle theme">
             {theme === 'dark' ? (
               // Show full moon icon when in dark theme
